@@ -86,7 +86,10 @@ if __name__ == '__main__':
 
     benchmark_seeds = benchmark_strategy.run(graph, seed_node_count)
     sim_data = {
-        benchmark_strategy.name + ' (benchmark)': benchmark_seeds,
-        strategy.name: seed_node_list,
+        benchmark_strategy.name + ' (benchmark)': [str(x) for x in benchmark_seeds],
+        strategy.name: [str(x) for x in seed_node_list],
     }
-    print(sim.run(graph_data, sim_data))
+    results = sim.run(graph_data, sim_data)
+    print('Results:')
+    for strategy_name, node_count in results.items():
+        print(' {0: <4} -> {1}'.format(node_count, strategy_name))

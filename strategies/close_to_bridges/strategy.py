@@ -6,4 +6,4 @@ class CloseToBridges(Strategy):
         super().__init__('Best nodes closer to bridges')
 
     def run(self, graph, seed_node_count):
-        raise NotImplementedError('NYI')
+        return range(100, 100 + seed_node_count)
