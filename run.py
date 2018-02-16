@@ -89,6 +89,4 @@ if __name__ == '__main__':
         benchmark_strategy.name + ' (benchmark)': benchmark_seeds,
         strategy.name: seed_node_list,
     }
-    print(graph_data)
-    print(sim_data)
-    print(sim.run(graph_data, benchmark_seeds))
+    print(sim.run(graph_data, sim_data))
