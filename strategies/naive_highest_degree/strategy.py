@@ -8,10 +8,12 @@ class NaiveHighestDegree(Strategy):
         super().__init__('Naive seed nodes with highest degree')
 
     def run(self, graph, seed_node_count):
-        centrality = nx.degree_centrality(graph)
+        node_count = graph.number_of_nodes()
+        degrees = nx.degree(graph)
         heap = []
-        for tup in centrality.items():
-            heapq.heappush(heap, tup[::-1])
+        for tup in degrees:
+            heapq.heappush(heap, (node_count - tup[1], tup[0]))
+
         seed_nodes = [0] * seed_node_count
         for i in range(seed_node_count):
             seed_nodes[i] = heapq.heappop(heap)[1]
