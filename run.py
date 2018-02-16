@@ -3,12 +3,12 @@
 import sys
 import json
 import networkx as nx
-from strategies.naive_clustering import strategy as nc
+from strategies.naive_highest_degree import strategy as nc
 from strategies.close_to_bridges import strategy as ctb
 
 strategies = {
-    '1': nc.NaiveClustering,
-    '2': ctb.CloseToBridges,
+    '1': nc.NaiveHighestDegree(),
+    '2': ctb.CloseToBridges(),
 }
 
 graphs = {
@@ -32,25 +32,25 @@ if __name__ == '__main__':
 
     # Input start
     input_strategy = None
-    if len(sys.argv) < 2 or strategies[sys.argv[1]] is None:
+    if len(sys.argv) < 2 or strategies.get(sys.argv[1]) is None:
         print("Specify strategy number:")
-        print("  1   - Naive best node in each of the N clusters")
-        print("  2   - Neighbour of best node in cluster that is close to bridges")
+        for i in range(1, len(strategies) + 1):
+            print('  {0}   {1}'.format(i, strategies.get(str(i)).name))
         input_strategy = str(input('Strategy number: '))
     else:
         input_strategy = sys.argv[1]
-    if strategies[input_strategy] is None:
+    if strategies.get(input_strategy) is None:
         raise Exception('Invalid option provided: ' + input_strategy)
 
     input_graph = None
-    if len(sys.argv) < 3 or graphs[sys.argv[2]] is None:
+    if len(sys.argv) < 3 or graphs.get(sys.argv[2]) is None:
         print("Specify graph number:")
         print("  1   - Test graph 1")
         print("  2   - Test graph 2")
         input_graph = str(input('Strategy number: '))
     else:
         input_graph = sys.argv[2]
-    if graphs[input_graph] is None:
+    if graphs.get(input_graph) is None:
         raise Exception('Invalid option provided: ' + input_graph)
 
     # TODO: Extract # of seed nodes from graph name?
@@ -63,13 +63,12 @@ if __name__ == '__main__':
     # Input end
 
     # Prepare variables
-    strategy_class = strategies[input_strategy]
-    graph = load_graph(graphs[input_graph])
+    strategy = strategies.get(input_strategy)
+    graph = load_graph(graphs.get(input_graph))
     seed_node_count = int(input_seed_nodes)
 
     # Run the strategy
-    strategy_instance = strategy_class()
-    seed_node_list = strategy_instance.run(graph, seed_node_count)
+    seed_node_list = strategy.run(graph, seed_node_count)
     assert len(seed_node_list) == seed_node_count
 
     # Write output
