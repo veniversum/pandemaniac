@@ -2,6 +2,7 @@
 
 import sys
 import json
+import sim
 import networkx as nx
 from strategies.naive_highest_degree import strategy as nc
 from strategies.close_to_bridges import strategy as ctb
@@ -11,6 +12,8 @@ strategies = {
     '2': ctb.CloseToBridges(),
 }
 
+benchmark_strategy = strategies['1']
+
 graphs = {
     '1': 'graphs/testgraph1.json',
     '2': 'graphs/testgraph2.json',
@@ -19,8 +22,7 @@ graphs = {
 output = 'output/output.txt'
 
 
-def load_graph(graph_file):
-    graph_data = json.load(open(graph_file))
+def load_graph(graph_data):
     graph = nx.Graph()
     for node, neighbours in graph_data.items():
         for neighbour in neighbours:
@@ -64,7 +66,8 @@ if __name__ == '__main__':
 
     # Prepare variables
     strategy = strategies.get(input_strategy)
-    graph = load_graph(graphs.get(input_graph))
+    graph_data = json.load(open(graphs.get(input_graph)))
+    graph = load_graph(graph_data)
     seed_node_count = int(input_seed_nodes)
 
     # Run the strategy
@@ -76,3 +79,16 @@ if __name__ == '__main__':
     output_file = open(output, 'w')
     for i in range(50):
         output_file.write(node_output)
+
+    print('Wrote output to `{0}`!'.format(output))
+
+    print('Preparing benchmark strategy and running simulation...')
+
+    benchmark_seeds = benchmark_strategy.run(graph, seed_node_count)
+    sim_data = {
+        benchmark_strategy.name + ' (benchmark)': benchmark_seeds,
+        strategy.name: seed_node_list,
+    }
+    print(graph_data)
+    print(sim_data)
+    print(sim.run(graph_data, benchmark_seeds))

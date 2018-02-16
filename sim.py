@@ -167,4 +167,4 @@ def get_result(colors, node_color):
 
 
 if __name__ == '__main__':
-  print USAGE
+  print(USAGE)
