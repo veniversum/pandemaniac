@@ -1,0 +1,13 @@
+backports.functools-lru-cache==1.4
+cycler==0.10.0
+decorator==4.2.1
+matplotlib==2.1.1
+networkx==2.0
+numpy==1.14.0
+pip-init==0.3.0
+pyparsing==2.2.0
+python-dateutil==2.6.1
+pytz==2017.3
+selenium==3.8.1
+six==1.11.0
+splinter==0.7.7
