@@ -19,9 +19,11 @@ class ExForce(Strategy):
                 dj = len(set(adj_list[n]).difference(cluster))
                 clusters.append(dj)
             dj_sum = sum(clusters)
-
+            if dj_sum == 0:
+                continue
             for dj in clusters:
                 dj_bar = dj/dj_sum
+                if dj_bar == 0: continue
                 exf += -dj_bar * np.log(dj_bar)
 
             # d = len(adj) + len(outlinks.difference(cluster))
