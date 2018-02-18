@@ -2,7 +2,7 @@ class Strategy:
     def __init__(self, name):
         self.name = name
 
-    def run(self, graph, seed_node_count):
+    def run(self, graph, seed_node_count, adj_list):
         """
         :param graph: A networkx graph instance
         :param seed_node_count: Number of seed nodes the algorithm needs to produce

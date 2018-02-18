@@ -7,7 +7,7 @@ class NaiveHighestDegree(Strategy):
     def __init__(self):
         super().__init__('Naive seed nodes with highest degree')
 
-    def run(self, graph, seed_node_count):
+    def run(self, graph, seed_node_count, **kwargs):
         node_count = graph.number_of_nodes()
         degrees = nx.degree(graph)
         heap = []

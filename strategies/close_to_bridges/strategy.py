@@ -5,5 +5,5 @@ class CloseToBridges(Strategy):
     def __init__(self):
         super().__init__('Best nodes closer to bridges')
 
-    def run(self, graph, seed_node_count):
+    def run(self, graph, seed_node_count, **kwargs):
         return range(seed_node_count)

@@ -6,10 +6,14 @@ import sim
 import networkx as nx
 from strategies.naive_highest_degree import strategy as nc
 from strategies.close_to_bridges import strategy as ctb
+from strategies.combinatorial_multi_armed_bandit import strategy as cmab
+from strategies.exforce import strategy as exf
 
 strategies = {
     '1': nc.NaiveHighestDegree(),
     '2': ctb.CloseToBridges(),
+    '3': cmab.CMAB(),
+    '4': exf.ExForce()
 }
 
 benchmark_strategy = strategies['1']
@@ -71,8 +75,8 @@ if __name__ == '__main__':
     seed_node_count = int(input_seed_nodes)
 
     # Run the strategy
-    seed_node_list = strategy.run(graph, seed_node_count)
-    assert len(seed_node_list) == seed_node_count
+    seed_node_list = strategy.run(graph, seed_node_count, graph_data)
+    # assert len(seed_node_list) == seed_node_count
 
     # Write output
     node_output = '\n'.join(str(x) for x in seed_node_list) + '\n'
@@ -84,7 +88,7 @@ if __name__ == '__main__':
 
     print('Preparing benchmark strategy and running simulation...')
 
-    benchmark_seeds = benchmark_strategy.run(graph, seed_node_count)
+    benchmark_seeds = benchmark_strategy.run(graph, seed_node_count, )
     sim_data = {
         benchmark_strategy.name + ' (benchmark)': [str(x) for x in benchmark_seeds],
         strategy.name: [str(x) for x in seed_node_list],
