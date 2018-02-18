@@ -5,13 +5,13 @@ import json
 import sim
 import networkx as nx
 from strategies.naive_highest_degree import strategy as nc
-from strategies.close_to_bridges import strategy as ctb
+from strategies.betweenness_clustering import strategy as bc
 from strategies.combinatorial_multi_armed_bandit import strategy as cmab
 from strategies.exforce import strategy as exf
 
 strategies = {
     '1': nc.NaiveHighestDegree(),
-    '2': ctb.CloseToBridges(),
+    '2': bc.BetweennessClustering(),
     '3': cmab.CMAB(),
     '4': exf.ExForce()
 }
