@@ -130,7 +130,7 @@ def update(adj_list, node_color, node):
         team_count[node_color[node]] += 1.5
     most_common = team_count.most_common(1)
     if len(most_common) > 0 and \
-                    most_common[0][1] > len(list(colored_neighbors)) / 2.0:
+            most_common[0][1] > (len(colored_neighbors) + (1.5 if node_color[node] is not None else 0)) / 2.0:
         return (True, most_common[0][0])
 
     return (False, node_color[node])
