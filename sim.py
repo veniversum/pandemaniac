@@ -59,8 +59,18 @@ def run(adj_list, node_mappings):
     node_mappings: A dictionary where the key is a name and the value is a list
                    of seed nodes associated with that name.
     """
-    results = run_simulation(adj_list, node_mappings)
+    results = run_simulation(adj_list, node_mappings)[0]
     return results
+
+
+def run_single_strategy(adj_list, seed_nodes):
+    """
+    :param adj_list:
+    :param seed_nodes:
+    :return: Array of nodes infected in each iteration
+    """
+    nodes_per_iteration = run_simulation(adj_list, {'color': seed_nodes})[1]
+    return nodes_per_iteration
 
 
 def run_simulation(adj_list, node_mappings):
@@ -85,19 +95,24 @@ def run_simulation(adj_list, node_mappings):
     prev = None
     nodes = adj_list.keys()
     last_iter = randint(100, 200)
+    changed_nodes_per_iteration = []
     while not is_stable(generation, last_iter, prev, node_color):
         prev = deepcopy(node_color)
+        changed_nodes = 0
         for node in nodes:
             (changed, color) = update(adj_list, prev, node)
             # Store the node's new color only if it changed.
-            if changed: node_color[node] = color
+            if changed and node_color[node] != color:
+                node_color[node] = color
+                changed_nodes += 1
         # NOTE: prev contains the state of the graph of the previous generation,
         # node_colros contains the state of the graph at the current generation.
         # You could check these two dicts if you want to see the intermediate steps
         # of the epidemic.
+        changed_nodes_per_iteration.append(changed_nodes)
         generation += 1
 
-    return get_result(node_mappings.keys(), node_color)
+    return get_result(node_mappings.keys(), node_color), changed_nodes_per_iteration
 
 
 def init(color_nodes, node_color):
@@ -112,9 +127,16 @@ def init(color_nodes, node_color):
                 node_color[node] = "__CONFLICT__"
             else:
                 node_color[node] = color
+    conflict_count = 0
     for (node, color) in node_color.items():
         if color == "__CONFLICT__":
+            if len(color_nodes) > 1:
+                print('Conflict on: ' + node)
+                conflict_count += 1
             node_color[node] = None
+
+    if len(color_nodes) > 1:
+        print('Conflict on {0} nodes'.format(conflict_count))
 
 
 def update(adj_list, node_color, node):
@@ -130,7 +152,7 @@ def update(adj_list, node_color, node):
         team_count[node_color[node]] += 1.5
     most_common = team_count.most_common(1)
     if len(most_common) > 0 and \
-            most_common[0][1] > (len(colored_neighbors) + (1.5 if node_color[node] is not None else 0)) / 2.0:
+                    most_common[0][1] > (len(colored_neighbors) + (1.5 if node_color[node] is not None else 0)) / 2.0:
         return (True, most_common[0][0])
 
     return (False, node_color[node])

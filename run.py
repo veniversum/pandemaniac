@@ -21,6 +21,7 @@ benchmark_strategy = strategies['1']
 graphs = {
     '1': 'graphs/testgraph1.json',
     '2': 'graphs/testgraph2.json',
+    '3': 'graphs/graph.json',
 }
 
 output = 'output/output.txt'
@@ -72,6 +73,7 @@ if __name__ == '__main__':
     strategy = strategies.get(input_strategy)
     graph_data = json.load(open(graphs.get(input_graph)))
     graph = load_graph(graph_data)
+    graph = nx.erdos_renyi_graph(500, 0.2)
     seed_node_count = int(input_seed_nodes)
 
     # Run the strategy
@@ -88,7 +90,7 @@ if __name__ == '__main__':
 
     print('Preparing benchmark strategy and running simulation...')
 
-    benchmark_seeds = benchmark_strategy.run(graph, seed_node_count, )
+    benchmark_seeds = benchmark_strategy.run(graph, seed_node_count,)
     sim_data = {
         benchmark_strategy.name + ' (benchmark)': [str(x) for x in benchmark_seeds],
         strategy.name: [str(x) for x in seed_node_list],
