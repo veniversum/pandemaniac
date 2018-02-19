@@ -110,7 +110,7 @@ def run_simulation(adj_list, node_mappings, verbose=0, visualize=False):
         FFMpegWriter = manimation.writers['ffmpeg']
         writer = FFMpegWriter(fps=1)
         import time
-        filename = str(len(node_mappings.keys())) + "_Players " + time.strftime("%Y-%m-%d %H:%M:%S") + ".avi"
+        filename = str(len(node_mappings.keys())) + "_Players " + time.strftime("%Y%m%d %H%M%S") + ".mp4"
 
         # Set up pyplot
         fig, ax = plt.subplots(figsize=(16, 9))

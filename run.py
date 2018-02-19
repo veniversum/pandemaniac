@@ -13,7 +13,8 @@ strategies = {
     '1': nc.NaiveHighestDegree(),
     '2': ctb.CloseToBridges(),
     '3': cmab.CMAB(),
-    '4': exf.ExForce()
+    '4': exf.ExForce(),
+    '5': exf.ExForce2()
 }
 
 benchmark_strategy = strategies['1']
@@ -21,6 +22,7 @@ benchmark_strategy = strategies['1']
 graphs = {
     '1': 'graphs/testgraph1.json',
     '2': 'graphs/testgraph2.json',
+    'other': 'graphs/8.35.1.json'
 }
 
 output = 'output/output.txt'
@@ -29,6 +31,7 @@ output = 'output/output.txt'
 def load_graph(graph_data):
     graph = nx.Graph()
     for node, neighbours in graph_data.items():
+        graph.add_node(node)
         for neighbour in neighbours:
             graph.add_edge(node, neighbour)
     return graph
@@ -51,9 +54,9 @@ if __name__ == '__main__':
     input_graph = None
     if len(sys.argv) < 3 or graphs.get(sys.argv[2]) is None:
         print("Specify graph number:")
-        print("  1   - Test graph 1")
-        print("  2   - Test graph 2")
-        input_graph = str(input('Strategy number: '))
+        for k, v in graphs:
+            print("  %s   - %s" % (k, v))
+        input_graph = str(input('Graph to use: '))
     else:
         input_graph = sys.argv[2]
     if graphs.get(input_graph) is None:
@@ -75,8 +78,8 @@ if __name__ == '__main__':
     seed_node_count = int(input_seed_nodes)
 
     # Run the strategy
-    seed_node_list = strategy.run(graph, seed_node_count, graph_data)
-    # assert len(seed_node_list) == seed_node_count
+    seed_node_list = strategy.run(graph, seed_node_count, adj_list=graph_data)
+    assert len(seed_node_list) == seed_node_count
 
     # Write output
     node_output = '\n'.join(str(x) for x in seed_node_list) + '\n'
@@ -88,12 +91,14 @@ if __name__ == '__main__':
 
     print('Preparing benchmark strategy and running simulation...')
 
-    benchmark_seeds = benchmark_strategy.run(graph, seed_node_count, )
+    benchmark_seeds = benchmark_strategy.run(graph, int(seed_node_count), adj_list=graph_data)
+    # simd = json.load(open('graphs/8.20.1.sample.json'))
+    # simd2 = {k: v[3] for k, v in simd.items()}
     sim_data = {
         benchmark_strategy.name + ' (benchmark)': [str(x) for x in benchmark_seeds],
         strategy.name: [str(x) for x in seed_node_list],
     }
-    results = sim.run(graph_data, sim_data)
+    results = sim.run(graph_data, sim_data, verbose=1, visualize=True)
     print('Results:')
     for strategy_name, node_count in results.items():
         print(' {0: <4} -> {1}'.format(node_count, strategy_name))
