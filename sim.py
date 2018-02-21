@@ -47,9 +47,13 @@ Possible Errors:
 from collections import Counter, OrderedDict
 from copy import deepcopy
 from random import randint
+from matplotlib import cm, colors
+import matplotlib.pyplot as plt
+import networkx as nx
+import numpy as np
 
 
-def run(adj_list, node_mappings):
+def run(adj_list, node_mappings, verbose=0, visualize=False):
     """
     Function: run
     -------------
@@ -59,11 +63,26 @@ def run(adj_list, node_mappings):
     node_mappings: A dictionary where the key is a name and the value is a list
                    of seed nodes associated with that name.
     """
-    results = run_simulation(adj_list, node_mappings)
+    results = run_simulation(adj_list, node_mappings, verbose, visualize)
     return results
 
 
-def run_simulation(adj_list, node_mappings):
+def load_graph(graph_data):
+    graph = nx.Graph()
+    for node, neighbours in graph_data.items():
+        graph.add_node(node)
+        for neighbour in neighbours:
+            graph.add_edge(node, neighbour)
+    return graph
+
+
+def draw_frame(G, pos, ax, colors, t):
+    nx.draw_networkx_nodes(G, pos=pos, ax=ax, node_size=10, alpha=0.6, edge_color='lightgrey', node_shape='o',
+                           node_color=colors)
+    ax.set_title("t=" + str(t), loc='right')
+
+
+def run_simulation(adj_list, node_mappings, verbose=0, visualize=False):
     """
     Function: run_simulation
     ------------------------
@@ -76,7 +95,45 @@ def run_simulation(adj_list, node_mappings):
     """
     # Stores a mapping of nodes to their color.
     node_color = dict([(node, None) for node in adj_list.keys()])
-    init(node_mappings, node_color)
+    print('Initializing test graph...')
+    init(node_mappings, node_color, verbose)
+    print('Done')
+
+    if visualize:
+        print('Preparing graph for visualization...', end='')
+        # Load and build graph
+        G = load_graph(adj_list)
+        pos = nx.drawing.layout.spring_layout(G, k=0.2, random_state=0, scale=10)
+
+        # Set up animation writers
+        import matplotlib.animation as manimation
+        FFMpegWriter = manimation.writers['ffmpeg']
+        writer = FFMpegWriter(fps=1)
+        import time
+        filename = str(len(node_mappings.keys())) + "_Players " + time.strftime("%Y%m%d %H%M%S") + ".mp4"
+
+        # Set up pyplot
+        fig, ax = plt.subplots(figsize=(16, 9))
+        fig.subplots_adjust(bottom=0.2)
+        key_colors = dict(map(lambda x: (x[1], x[0]), enumerate(node_mappings.keys())))
+        key_colors[None] = -1
+        import matplotlib.patches as mpatches
+        key_patches = []
+        colormap = cm.prism
+        colormap.set_bad('lightgray')
+        m = cm.ScalarMappable(cmap=colormap, norm=colors.Normalize(0, len(node_mappings.keys())))
+        key_patches.append(mpatches.Patch(color='lightgray', label='Unclaimed'))
+        for k in node_mappings.keys():
+            key_patches.append(mpatches.Patch(color=m.to_rgba(key_colors[k]), label=str(k)))
+        fig.legend(loc='upper left', bbox_to_anchor=(0.5, 1),
+                   fancybox=True, handles=key_patches)
+        # plt.tight_layout()
+        writer.setup(fig, filename)
+        print('DONE')
+
+    if verbose:
+        print('Initial nodes counts minus overlaps:')
+        print(get_result(node_mappings.keys(), node_color))
     generation = 1
 
     # Keep calculating the epidemic until it stops changing. Randomly choose
@@ -85,7 +142,15 @@ def run_simulation(adj_list, node_mappings):
     prev = None
     nodes = adj_list.keys()
     last_iter = randint(100, 200)
+
     while not is_stable(generation, last_iter, prev, node_color):
+        if visualize:
+            ax.clear()
+            values = np.array([key_colors[node_color.get(node, None)] for node in G.nodes()])
+            values = np.ma.masked_where(values < 0, values)
+            draw_frame(G, pos, ax, m.to_rgba(values), generation)
+            plt.axis('off')
+            writer.grab_frame()
         prev = deepcopy(node_color)
         for node in nodes:
             (changed, color) = update(adj_list, prev, node)
@@ -96,11 +161,13 @@ def run_simulation(adj_list, node_mappings):
         # You could check these two dicts if you want to see the intermediate steps
         # of the epidemic.
         generation += 1
-
+    if visualize:
+        writer.finish()
+        writer.cleanup()
     return get_result(node_mappings.keys(), node_color)
 
 
-def init(color_nodes, node_color):
+def init(color_nodes, node_color, verbose=0):
     """
     Function: init
     --------------
@@ -114,6 +181,8 @@ def init(color_nodes, node_color):
                 node_color[node] = color
     for (node, color) in node_color.items():
         if color == "__CONFLICT__":
+            if verbose:
+                print('Conflict:', node)
             node_color[node] = None
 
 
