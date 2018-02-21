@@ -95,9 +95,9 @@ def run_simulation(adj_list, node_mappings, verbose=0, visualize=False):
     """
     # Stores a mapping of nodes to their color.
     node_color = dict([(node, None) for node in adj_list.keys()])
-    print('Initializing test graph...')
+    # print('Initializing test graph...')
     init(node_mappings, node_color, verbose)
-    print('Done')
+    # print('Done')
 
     if visualize:
         print('Preparing graph for visualization...', end='')
