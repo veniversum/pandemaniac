@@ -8,13 +8,26 @@ from strategies.naive_highest_degree import strategy as nc
 from strategies.close_to_bridges import strategy as ctb
 from strategies.combinatorial_multi_armed_bandit import strategy as cmab
 from strategies.exforce import strategy as exf
+from strategies.freeforall import reinforce as reinforce
+from strategies.twoplayer import tamore_sucks as tamore
+from strategies.twoplayer import greedy_lc
+from strategies.twoplayer import cluster
+from strategies.freeforall import cluster as ffacluster
+from strategies.twoplayer import max_neighbor
+from collections import defaultdict
 
 strategies = {
     '1': nc.NaiveHighestDegree(),
     '2': ctb.CloseToBridges(),
     '3': cmab.CMAB(),
     '4': exf.ExForce(),
-    '5': exf.ExForce2()
+    '5': exf.ExForce2(),
+    '6': reinforce.Reinforce(),
+    '7': tamore.TamoreSucks(),
+    '8': greedy_lc.Greedy_C_LC(),
+    '9': cluster.Cluster(),
+    '10': max_neighbor.MaxNeighbor(),
+    '11': ffacluster.Cluster(),
 }
 
 benchmark_strategy = strategies['1']
@@ -22,7 +35,7 @@ benchmark_strategy = strategies['1']
 graphs = {
     '1': 'graphs/testgraph1.json',
     '2': 'graphs/testgraph2.json',
-    'other': 'graphs/8.35.1.json'
+    'other': 'graphs/8.10.5.json'
 }
 
 output = 'output/output.txt'
@@ -69,6 +82,11 @@ if __name__ == '__main__':
         input_seed_nodes = str(input('Number of seed nodes: '))
     else:
         input_seed_nodes = sys.argv[3]
+
+    if len(sys.argv) < 5:
+        visualize = False
+    else:
+        visualize = int(sys.argv[4])
     # Input end
 
     # Prepare variables
@@ -91,14 +109,24 @@ if __name__ == '__main__':
 
     print('Preparing benchmark strategy and running simulation...')
 
-    benchmark_seeds = benchmark_strategy.run(graph, int(seed_node_count), adj_list=graph_data)
-    # simd = json.load(open('graphs/8.20.1.sample.json'))
-    # simd2 = {k: v[3] for k, v in simd.items()}
-    sim_data = {
-        benchmark_strategy.name + ' (benchmark)': [str(x) for x in benchmark_seeds],
-        strategy.name: [str(x) for x in seed_node_list],
-    }
-    results = sim.run(graph_data, sim_data, verbose=1, visualize=True)
+    benchmark_seeds = benchmark_strategy.run(graph, int(seed_node_count * 1.2), adj_list=graph_data)
+    winner_count = defaultdict(int)
+    for i in range(0,50):
+        print("Run #", i)
+        simd = json.load(open('graphs/8.10.5-LosAngelesFlakers.json'))
+        simd2 = {k: v[i] for k, v in simd.items() if k != 'garbagecomplex'}
+        simd2['RabidPandas'] = seed_node_list
+        sim_data = {
+            benchmark_strategy.name + ' (benchmark)': [str(x) for x in benchmark_seeds],
+            strategy.name: [str(x) for x in seed_node_list],
+        }
+        results = sim.run(graph_data, simd2, verbose=0, visualize=visualize)
+        print('Results:')
+        for strategy_name, node_count in results.items():
+            print(' {0: <4} -> {1}'.format(node_count, strategy_name))
+        import operator
+        winner = max(results.items(), key=operator.itemgetter(1))[0]
+        winner_count[winner] += 1
     print('Results:')
-    for strategy_name, node_count in results.items():
+    for strategy_name, node_count in winner_count.items():
         print(' {0: <4} -> {1}'.format(node_count, strategy_name))

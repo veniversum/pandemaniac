@@ -77,12 +77,22 @@ def load_graph(graph_data):
 
 
 def draw_frame(G, pos, ax, colors, t):
+    nx.draw_networkx_edges(G, pos=pos, ax=ax, alpha=0.5, edge_color="#f0f0f033")
     nx.draw_networkx_nodes(G, pos=pos, ax=ax, node_size=10, alpha=0.6, edge_color='lightgrey', node_shape='o',
                            node_color=colors)
-    ax.set_title("t=" + str(t), loc='right')
+    ax.set_title("T=" + str(t), loc='right')
 
 
 def run_simulation(adj_list, node_mappings, verbose=0, visualize=False):
+    def draw_legend(results):
+        key_patches = []
+        key_patches.append(mpatches.Patch(color='lightgray', label='Unclaimed: %d' % results[None]))
+        for k in node_mappings.keys():
+            key_patches.append(mpatches.Patch(color=m.to_rgba(key_colors[k]), label="%s: %d" % (str(k), results[k])))
+        ax.legend(loc='upper left', bbox_to_anchor=(-0.1, 1.1),
+                  fancybox=True, handles=key_patches)
+
+
     """
     Function: run_simulation
     ------------------------
@@ -95,20 +105,21 @@ def run_simulation(adj_list, node_mappings, verbose=0, visualize=False):
     """
     # Stores a mapping of nodes to their color.
     node_color = dict([(node, None) for node in adj_list.keys()])
-    print('Initializing test graph...')
+    # print('Initializing test graph...')
     init(node_mappings, node_color, verbose)
-    print('Done')
+    # print('Done')
 
     if visualize:
-        print('Preparing graph for visualization...', end='')
+        print('Preparing graph for visualization...', end='', flush=True)
         # Load and build graph
         G = load_graph(adj_list)
-        pos = nx.drawing.layout.spring_layout(G, k=0.2, random_state=0, scale=10)
+        pos = nx.drawing.layout.spring_layout(G, random_state=0, scale=10)
+        # pos = nx.drawing.layout.kamada_kawai_layout(G, scale=10)
+        # pos = nx.nx_pydot.pydot_layout(G)
 
         # Set up animation writers
-        import matplotlib.animation as manimation
-        FFMpegWriter = manimation.writers['ffmpeg']
-        writer = FFMpegWriter(fps=1)
+        from matplotlib.animation import FFMpegFileWriter
+        writer = FFMpegFileWriter(fps=1)
         import time
         filename = str(len(node_mappings.keys())) + "_Players " + time.strftime("%Y%m%d %H%M%S") + ".mp4"
 
@@ -125,10 +136,9 @@ def run_simulation(adj_list, node_mappings, verbose=0, visualize=False):
         key_patches.append(mpatches.Patch(color='lightgray', label='Unclaimed'))
         for k in node_mappings.keys():
             key_patches.append(mpatches.Patch(color=m.to_rgba(key_colors[k]), label=str(k)))
-        fig.legend(loc='upper left', bbox_to_anchor=(0.5, 1),
-                   fancybox=True, handles=key_patches)
+        # fig.legend(loc='upper left', bbox_to_anchor=(0, 1), fancybox=True, handles=key_patches)
         # plt.tight_layout()
-        writer.setup(fig, filename)
+        writer.setup(fig, filename, dpi=200)
         print('DONE')
 
     if verbose:
@@ -144,11 +154,17 @@ def run_simulation(adj_list, node_mappings, verbose=0, visualize=False):
     last_iter = randint(100, 200)
 
     while not is_stable(generation, last_iter, prev, node_color):
+        legends = list(node_mappings.keys())
+        legends.append(None)
+        results = get_result(legends, node_color)
+        if verbose:
+            print(results)
         if visualize:
             ax.clear()
             values = np.array([key_colors[node_color.get(node, None)] for node in G.nodes()])
             values = np.ma.masked_where(values < 0, values)
             draw_frame(G, pos, ax, m.to_rgba(values), generation)
+            draw_legend(results)
             plt.axis('off')
             writer.grab_frame()
         prev = deepcopy(node_color)
@@ -163,7 +179,7 @@ def run_simulation(adj_list, node_mappings, verbose=0, visualize=False):
         generation += 1
     if visualize:
         writer.finish()
-        writer.cleanup()
+        # writer.cleanup()
     return get_result(node_mappings.keys(), node_color)
 
 
@@ -181,7 +197,7 @@ def init(color_nodes, node_color, verbose=0):
                 node_color[node] = color
     for (node, color) in node_color.items():
         if color == "__CONFLICT__":
-            if verbose:
+            if verbose > 1:
                 print('Conflict:', node)
             node_color[node] = None
 
@@ -231,7 +247,7 @@ def get_result(colors, node_color):
     for color in colors:
         color_nodes[color] = 0
     for node, color in node_color.items():
-        if color is not None:
+        if color in colors:
             color_nodes[color] += 1
     return color_nodes
 

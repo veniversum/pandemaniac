@@ -44,50 +44,61 @@ class ExForce2(Strategy):
         super().__init__('ExForce2')
         self.enemy = nhd.NaiveHighestDegree()
 
-    def run(self, graph, seed_node_count, adj_list, n_players=2):
+    def run(self, graph, seed_node_count, adj_list, n_players=8):
         enemy_picks = self.enemy.run(graph, seed_node_count)
         n_reserve = int(seed_node_count * 1.5)  # N seeds to sample from
         heap = []
         enemy_overlap = []
-        for node, adj in adj_list.items():
-            exf = 0.
-            clusters = []
-            cluster = set(adj)
-            cluster.add(node)
-            for n in adj:
-                dj = len(set(adj_list[n]).difference(cluster))
-                clusters.append(dj)
-            dj_sum = sum(clusters)
-            if dj_sum == 0:
-                continue
-            for dj in clusters:
-                dj_bar = dj / dj_sum
-                if dj_bar == 0: continue
-                exf += -dj_bar * np.log(dj_bar)
+        # heap = []
+        # for node, adj in adj_list.items():
+        #     exf = 0.
+        #     clusters = []
+        #     cluster = set(adj)
+        #     cluster.add(node)
+        #     for n in adj:
+        #         dj = len(set(adj_list[n]).difference(cluster))
+        #         clusters.append(dj)
+        #     dj_sum = sum(clusters)
+        #     if dj_sum == 0:
+        #         continue
+        #     for dj in clusters:
+        #         dj_bar = dj / dj_sum
+        #         if dj_bar == 0: continue
+        #         exf += -dj_bar * np.log(dj_bar)
+        #     # d = len(adj) + len(outlinks.difference(cluster))
+        #
+        #     if len(heap) < seed_node_count - 5:
+        #         heapq.heappush(heap, (exf, node))
+        #     elif exf > heap[0][0]:
+        #         heapq.heapreplace(heap, (exf, node))
+        seed_nodes = []#[v for _, v in heap]
+        # support = heapq.nlargest(1, heap)[0][1]
 
-            if node in enemy_picks:
-                enemy_overlap.append((exf, node))
-            else:
-                if len(heap) < seed_node_count:
-                    heapq.heappush(heap, (exf, node))
-                elif exf > heap[0][0]:
-                    heapq.heapreplace(heap, (exf, node))
-        best_not_in = heapq.nlargest(1, heap)
-        enemy_overlap = [x for x in enemy_overlap if x[0] > best_not_in[0][0]]
-        enemy_overlap.extend(heap)
-        enemy_overlap.sort()
-        seed_nodes = []
+        for gg in range(10):
+            deg_best = 0
+            node_best = None
+            for node, adj in adj_list.items():
+                if node in seed_nodes: continue
+                exf = 0.
+                clusters = []
+                cluster = set(adj)
+                cluster.add(node)
+                for n in adj:
+                    cluster2 = cluster | set(adj_list[n])
+                    for m in adj_list[n]:
+                        dj = len(set(adj_list[m]).difference(cluster2))
+                        clusters.append(dj)
+                dj_sum = sum(clusters)
+                if dj_sum == 0:
+                    continue
+                for dj in clusters:
+                    dj_bar = dj / dj_sum
+                    if dj_bar == 0: continue
+                    exf += -dj_bar * np.log(dj_bar)
+                # exf *= np.log(0.5*len(adj))
+                if exf > deg_best:
+                    deg_best = exf
+                    node_best = node
+            seed_nodes.append(node_best)
 
-        n_greedy = 5 #int(float(seed_node_count) / (n_players - 1))
-        n_safe = 0 #seed_node_count - n_greedy
-
-        for i in range(n_greedy):
-            exf, node = enemy_overlap.pop()
-            seed_nodes.append(node)
-            if (exf, node) in heap: heap.remove((exf, node))
-        heap.sort()
-        for i in range(n_safe):
-            exf, node = heap.pop()
-            seed_nodes.append(node)
-
-        return seed_nodes
+        return set(seed_nodes)
