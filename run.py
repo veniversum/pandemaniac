@@ -22,11 +22,13 @@ strategies = {
     '3': cmab.CMAB(),
     '4': exf.ExForce(),
     '5': exf.ExForce2(),
-    '6': reinforce.Reinforce(),
     '7': tamore.TamoreSucks(),
     '8': greedy_lc.Greedy_C_LC(),
     '9': cluster.Cluster(),
     '10': max_neighbor.MaxNeighbor(),
+
+    #Free for all
+    '6': reinforce.Reinforce(),
     '11': ffacluster.Cluster(),
 }
 
@@ -35,7 +37,7 @@ benchmark_strategy = strategies['1']
 graphs = {
     '1': 'graphs/testgraph1.json',
     '2': 'graphs/testgraph2.json',
-    'other': 'graphs/8.10.5.json'
+    'other': 'graphs/13.10.6.json'
 }
 
 output = 'output/output.txt'
@@ -109,12 +111,12 @@ if __name__ == '__main__':
 
     print('Preparing benchmark strategy and running simulation...')
 
-    benchmark_seeds = benchmark_strategy.run(graph, int(seed_node_count * 1.2), adj_list=graph_data)
+    benchmark_seeds = benchmark_strategy.run(graph, int(seed_node_count), adj_list=graph_data)
     winner_count = defaultdict(int)
-    for i in range(0,50):
+    for i in range(0,0):
         print("Run #", i)
-        simd = json.load(open('graphs/8.10.5-LosAngelesFlakers.json'))
-        simd2 = {k: v[i] for k, v in simd.items() if k != 'garbagecomplex'}
+        simd = json.load(open('graphs/8.10.4-Pandeadeaja.json'))
+        simd2 = {k: v[i] for k, v in simd.items() if k != ''}
         simd2['RabidPandas'] = seed_node_list
         sim_data = {
             benchmark_strategy.name + ' (benchmark)': [str(x) for x in benchmark_seeds],

@@ -7,7 +7,7 @@ from strategies.Strategy import Strategy
 import community
 import operator
 from sklearn import cluster
-from networkx.algorithms.community import label_propagation_communities
+from networkx.algorithms.community import label_propagation_communities, asyn_fluidc
 from strategies.naive_highest_degree import strategy as nc
 import sim
 
@@ -17,13 +17,20 @@ class Cluster(Strategy):
         super().__init__('This should beat TA_more')
 
     def run(self, graph, seed_node_count, adj_list):
-        n_clusters = 2
+        print("Number of nodes:", graph.number_of_nodes())
+        n_clusters = 3
         largest_cc = max(nx.connected_components(graph), key=len)
         G = nx.subgraph(graph, largest_cc)
 
         communities = list(label_propagation_communities(G))
-        print("List of community sizes:", list(map(len, list(label_propagation_communities(G)))))
+        print("List of community sizes:", list(map(len, communities)))
         best_community = list(max(communities, key=len))
+        # best_community, best_community2 = sorted(communities, key=len)[-2:]
+        # communities.remove(best_community)
+        # best_community2 = list(max(communities, key=len))
+
+        # best_community_nodes = int(float(seed_node_count) * len(best_community) / (len(best_community) + len(best_community2)))
+        # best_community2_nodes = seed_node_count - best_community_nodes
 
         sc = cluster.SpectralClustering(n_clusters=n_clusters,
                                         eigen_solver='arpack',
