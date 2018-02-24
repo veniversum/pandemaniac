@@ -1,13 +1,25 @@
 import sim
 import json
+from os import path
 import networkx as nx
-from ta_more.tamore_strategy import TaMoreStrategy
+from strategies.naive_highest_degree import strategy as nc
+from ta_more.clustering_strategy import ClusteringStrategy
+from ta_more.communities_strategy import CommunitiesStrategy
 
 graphs = [
-    '2.10.30',
-    '2.10.31',
-    '2.10.32',
-    '2.10.33',
+    # '2.10.30',
+    # '2.10.31',
+    # '2.10.32',
+    # '2.10.33',
+    # '2.10.34',
+    '27.10.1',
+]
+
+strategies = [
+    CommunitiesStrategy('3 communities', 3),
+    # CommunitiesStrategy('3 communities', 3),
+    # ClusteringStrategy('2 clusters', 2),
+    # ClusteringStrategy('3 clusters', 3),
 ]
 
 
@@ -21,31 +33,39 @@ def load_graph(adj_list):
 
 
 def main():
-    for graph_name in graphs:
-        adj_list = json.load(open('data/{0}.json'.format(graph_name)))
-        G = load_graph(adj_list)
-        strategy = TaMoreStrategy()
-        our_seeds = strategy.run(adj_list, G, 10)
-        tamore_all_seeds = json.load(open('data/{0}-seeds.json'.format(graph_name)))['TA_more']
-
-        our_wins = 0
-        tamore_wins = 0
-        ties = 0
-        for tamore_seeds in tamore_all_seeds:
-            sim_data = {
-                'RabidPandas': our_seeds,
-                'TA_more': tamore_seeds
-            }
-            results = sim.run(adj_list, sim_data)
-            if results['TA_more'] > results['RabidPandas']:
-                tamore_wins += 1
-            elif results['TA_more'] < results['RabidPandas']:
-                our_wins += 1
+    for strategy in strategies:
+        print('Strategy `{0}`'.format(strategy.name))
+        for graph_name in graphs:
+            adj_list = json.load(open('data/{0}.json'.format(graph_name)))
+            seed_file = 'data/{0}-seeds.json'.format(graph_name)
+            if path.isfile(seed_file):
+                team_seeds = json.load(open(seed_file))
             else:
-                ties += 1
+                raise Exception('Nope')
 
-        print('{0}:  RabidPandas  {1: <3} -   {2: <3}  TA_more   ({3} ties)'.format(graph_name, our_wins,
-                                                                                    tamore_wins, ties))
+            G = load_graph(adj_list)
+            our_seeds = strategy.run(adj_list, G)
+
+            for round_no in range(50):
+                sim_data = {
+                    'RabidPandas': our_seeds,
+                }
+                for team, seeds in team_seeds.items():
+                    if team != 'RabidPandas':
+                        sim_data[team] = seeds[round_no]
+                results = sim.run(adj_list, sim_data)
+                our_score = results['RabidPandas']
+                lost = False
+                lost_to = ''
+                for team, score in results.items():
+                    if team != 'RabidPandas':
+                        if score > our_score:
+                            lost = True
+                            lost_to += ' ' + str(score)
+                if not lost:
+                    print('Won round {}, {} nodes.'.format(round_no, our_score))
+                else:
+                    print('--- round {}, {} nodes. Lost to : {}'.format(round_no, our_score, lost_to))
 
 
 if __name__ == '__main__':
