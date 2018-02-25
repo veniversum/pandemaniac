@@ -13,6 +13,7 @@ from strategies.twoplayer import tamore_sucks as tamore
 from strategies.twoplayer import greedy_lc
 from strategies.twoplayer import cluster
 from strategies.freeforall import cluster as ffacluster
+from strategies.freeforall import communities as comm
 from strategies.twoplayer import max_neighbor
 from collections import defaultdict
 
@@ -30,6 +31,7 @@ strategies = {
     #Free for all
     '6': reinforce.Reinforce(),
     '11': ffacluster.Cluster(),
+    '12': comm.CommunitiesStrategy(''),
 }
 
 benchmark_strategy = strategies['1']
@@ -37,7 +39,7 @@ benchmark_strategy = strategies['1']
 graphs = {
     '1': 'graphs/testgraph1.json',
     '2': 'graphs/testgraph2.json',
-    'other': 'graphs/13.10.6.json'
+    'other': 'graphs/27.10.3.json'
 }
 
 output = 'output/output.txt'
@@ -106,6 +108,7 @@ if __name__ == '__main__':
     output_file = open(output, 'w')
     for i in range(50):
         output_file.write(node_output)
+    output_file.close()
 
     print('Wrote output to `{0}`!'.format(output))
 
@@ -115,8 +118,8 @@ if __name__ == '__main__':
     winner_count = defaultdict(int)
     for i in range(0,0):
         print("Run #", i)
-        simd = json.load(open('graphs/8.10.4-Pandeadeaja.json'))
-        simd2 = {k: v[i] for k, v in simd.items() if k != ''}
+        simd = json.load(open('graphs/27.10.2-RabidPandas.json'))
+        simd2 = {k: v[i] for k, v in simd.items() if k != 'RabidPandas'}
         simd2['RabidPandas'] = seed_node_list
         sim_data = {
             benchmark_strategy.name + ' (benchmark)': [str(x) for x in benchmark_seeds],

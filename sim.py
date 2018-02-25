@@ -113,7 +113,7 @@ def run_simulation(adj_list, node_mappings, verbose=0, visualize=False):
         print('Preparing graph for visualization...', end='', flush=True)
         # Load and build graph
         G = load_graph(adj_list)
-        pos = nx.drawing.layout.spring_layout(G, random_state=0, scale=10)
+        pos = nx.drawing.layout.spring_layout(G, k=0.1, random_state=0, scale=10)
         # pos = nx.drawing.layout.kamada_kawai_layout(G, scale=10)
         # pos = nx.nx_pydot.pydot_layout(G)
 
@@ -130,7 +130,7 @@ def run_simulation(adj_list, node_mappings, verbose=0, visualize=False):
         key_colors[None] = -1
         import matplotlib.patches as mpatches
         key_patches = []
-        colormap = cm.prism
+        colormap = cm.tab10
         colormap.set_bad('lightgray')
         m = cm.ScalarMappable(cmap=colormap, norm=colors.Normalize(0, len(node_mappings.keys())))
         key_patches.append(mpatches.Patch(color='lightgray', label='Unclaimed'))
