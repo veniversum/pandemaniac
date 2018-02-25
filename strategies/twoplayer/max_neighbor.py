@@ -24,6 +24,7 @@ class MaxNeighbor(Strategy):
 
         heap = []
         for node in D2:
+            if node in D1: continue
             adjs = adj_list[node]
             n_in_top = 0
             other_deg = 0

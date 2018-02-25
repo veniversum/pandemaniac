@@ -37,7 +37,7 @@ class TamoreSucks(Strategy):
                 adjs = adj_list[node]
                 score = 0
                 for adj in adjs:
-                    score += max(1, N_v[adj])
+                    score += 1./ max(1, N_v[adj] + 1)
                 # score /= len(adjs)
                 if score > best_score:
                     best_score = score

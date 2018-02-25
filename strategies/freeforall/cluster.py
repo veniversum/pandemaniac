@@ -19,6 +19,7 @@ class Cluster(Strategy):
     def run(self, graph, seed_node_count, adj_list):
         print("Number of nodes:", graph.number_of_nodes())
         n_clusters = 3
+        print("List of CC sizes:", list(map(len, nx.connected_components(graph))))
         largest_cc = max(nx.connected_components(graph), key=len)
         G = nx.subgraph(graph, largest_cc)
 
@@ -32,32 +33,32 @@ class Cluster(Strategy):
         # best_community_nodes = int(float(seed_node_count) * len(best_community) / (len(best_community) + len(best_community2)))
         # best_community2_nodes = seed_node_count - best_community_nodes
 
-        sc = cluster.SpectralClustering(n_clusters=n_clusters,
-                                        eigen_solver='arpack',
-                                        affinity="precomputed", n_init=100, assign_labels='discretize')
-        adj_matrix = nx.to_numpy_matrix(G)
-        sc.fit(adj_matrix)
-        labels = sc.labels_
-        cluster_dict = dict()
-        for i, k in enumerate(G.nodes()):
-            cluster_dict[k] = labels[i]
-        best_avg_cluster = -1
-        best_cluster_avg = -1
-        best_sum_cluster = -1
-        best_cluster_sum = -1
-        for i in range(n_clusters):
-            nodes_in_cluster = [k for k, v in cluster_dict.items() if v == i]
-            cluster_sum = np.sum([tup[1] for tup in G.degree(nodes_in_cluster)])
-            cluster_avg = np.average([tup[1] for tup in G.degree(nodes_in_cluster)])
-            # print(i, ':', cluster_sum, ':', cluster_avg, ';', len(nodes_in_cluster))
-            if cluster_sum > best_cluster_sum:
-                best_sum_cluster = i
-                best_cluster_sum = cluster_sum
-
-            if cluster_avg > best_cluster_avg:
-                best_avg_cluster = i
-                best_cluster_avg = cluster_avg
-        best_community = [n for n in G.nodes() if cluster_dict[n] == best_sum_cluster]
+        # sc = cluster.SpectralClustering(n_clusters=n_clusters,
+        #                                 eigen_solver='arpack',
+        #                                 affinity="precomputed", n_init=100, assign_labels='discretize')
+        # adj_matrix = nx.to_numpy_matrix(G)
+        # sc.fit(adj_matrix)
+        # labels = sc.labels_
+        # cluster_dict = dict()
+        # for i, k in enumerate(G.nodes()):
+        #     cluster_dict[k] = labels[i]
+        # best_avg_cluster = -1
+        # best_cluster_avg = -1
+        # best_sum_cluster = -1
+        # best_cluster_sum = -1
+        # for i in range(n_clusters):
+        #     nodes_in_cluster = [k for k, v in cluster_dict.items() if v == i]
+        #     cluster_sum = np.sum([tup[1] for tup in G.degree(nodes_in_cluster)])
+        #     cluster_avg = np.average([tup[1] for tup in G.degree(nodes_in_cluster)])
+        #     # print(i, ':', cluster_sum, ':', cluster_avg, ';', len(nodes_in_cluster))
+        #     if cluster_sum > best_cluster_sum:
+        #         best_sum_cluster = i
+        #         best_cluster_sum = cluster_sum
+        #
+        #     if cluster_avg > best_cluster_avg:
+        #         best_avg_cluster = i
+        #         best_cluster_avg = cluster_avg
+        # best_community = [n for n in G.nodes() if cluster_dict[n] == best_sum_cluster]
 
         G = nx.subgraph(graph, best_community)
 
@@ -65,8 +66,9 @@ class Cluster(Strategy):
         metrics = nx.degree(G)
         heap = []
         for tup in metrics:
+            # if tup[0] not in best_community: continue
             k, v = tup[0], tup[1]
-            if len(heap) < seed_node_count:
+            if len(heap) < seed_node_count * 2:
                 heapq.heappush(heap, (v, k))
             elif v > heap[0][0]:
                 heapq.heapreplace(heap, (v, k))
@@ -84,6 +86,8 @@ class Cluster(Strategy):
             local_cluster.add(node)
             for n in adjs:
                 dj = len(set(adj_list[n]).difference(local_cluster))
+                if n in target_top:
+                    dj *= 1.5
                 clusters.append(dj)
             dj_sum = sum(clusters)
             if dj_sum == 0:
