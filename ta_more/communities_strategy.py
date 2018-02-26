@@ -20,7 +20,7 @@ def get_exf_dict(adj_list):
             dj_bar = dj / dj_sum
             if dj_bar == 0: continue
             exf += -dj_bar * np.log(dj_bar)
-        exf_dict[node] = exf
+        exf_dict[node] = exf ** 2
     return exf_dict
 
 
@@ -84,7 +84,7 @@ class CommunitiesStrategy:
 
         community_subgraph = nx.subgraph(best_subgraph, community_to_use)
         betweenness = nx.closeness_centrality(community_subgraph)
-        offset = 40
-        seed_nodes = get_n_best(offset + 10, betweenness, community_to_use)
+        offset = 5
+        seed_nodes = get_n_best(offset + 20, betweenness, community_to_use)
 
-        return seed_nodes[offset - 1:]
+        return seed_nodes[offset:]

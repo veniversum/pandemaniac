@@ -47,20 +47,42 @@ def get_n_best_nodes(n, exf_dict, node_bunch):
     return best_nodes
 
 
+def get_n_best(n, val_dict, bunch):
+    heap = []
+
+    for node in bunch:
+        heapq.heappush(heap, (-val_dict[node], node))
+
+    best = [0] * n
+    for i in range(n):
+        best[i] = heapq.heappop(heap)[1]
+    return best
+
+
 class ClusteringStrategy:
     def __init__(self, name, cluster_count=2):
         self.name = name
         self.cluster_count = cluster_count
 
     def run(self, adj_list, G):
-        n = G.number_of_nodes()
-        adj_matrix = nx.adjacency_matrix(G)
+
+        # Determine the largest connected component
+        connected_components = nx.connected_components(G)
+        best_size = -1
+        best_n_bunch = None
+        for n_bunch in connected_components:
+            if len(n_bunch) > best_size:
+                best_n_bunch = n_bunch
+                best_size = len(n_bunch)
+
+        best_subgraph = nx.subgraph(G, best_n_bunch)
 
         # Choose the best cluster and get its exforce
-        clustering = cluster.spectral_clustering(adj_matrix, n_clusters=self.cluster_count, eigen_solver='arpack')
+        clustering = cluster.spectral_clustering(nx.adjacency_matrix(best_subgraph), n_clusters=self.cluster_count,
+                                                 eigen_solver='arpack')
         cluster_1 = []
         cluster_2 = []
-        for i in range(n):
+        for i in range(len(clustering)):
             i_str = str(i)
             cluster_index = clustering[i]
             if cluster_index == 0:
@@ -78,14 +100,19 @@ class ClusteringStrategy:
             cluster_adj_list[a] = list(b)
         exf_dict = get_exf_dict(cluster_adj_list)
 
+        # offset = 50
+        # seed_nodes = get_n_best(offset + 10, exf_dict, exf_dict.keys())
+        #
+        # return seed_nodes[offset:]
+
         # Figure out neighbours of the best node. Out of these neighbours, pick 3 best nodes and figure 2 of their
         # best neighbours that weren't seen before.
-        best_node = get_the_best_node(exf_dict)
+        best_node = get_n_best(2, exf_dict, exf_dict.keys())[1]
         immediate_neighbours = cluster_adj_list[best_node]
         seen_nodes = {best_node: True}
         for node in immediate_neighbours:
             seen_nodes[node] = True
-        best_neighbours = get_n_best_nodes(3, exf_dict, immediate_neighbours)
+        best_neighbours = get_n_best_nodes(10, exf_dict, immediate_neighbours)
         seed_nodes = best_neighbours[:]
         seed_nodes.append(best_node)
 
@@ -99,7 +126,15 @@ class ClusteringStrategy:
                 if seen_nodes.get(neighbour) is None:
                     seen_nodes[neighbour] = True
                     potential_nodes.append(neighbour)
-            new_seed_nodes = get_n_best_nodes(2, exf_dict, potential_nodes)
-            seed_nodes.extend(new_seed_nodes)
+            try:
+                new_seed_nodes = get_n_best_nodes(5, exf_dict, potential_nodes)
+                seed_nodes.extend(new_seed_nodes)
+            except:
+                print('Error!')
 
-        return seed_nodes
+        offset = 20
+        # seed_nodes = get_n_best(offset + 10, exf_dict, exf_dict.keys())
+
+        return (seed_nodes[offset:])[:20]
+
+        # return seed_nodes

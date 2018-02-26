@@ -12,13 +12,15 @@ graphs = [
     # '2.10.32',
     # '2.10.33',
     # '2.10.34',
-    '27.10.1',
+    # '27.10.1',
+    '13.20.9',
+    # '13.10.6',
 ]
 
 strategies = [
-    CommunitiesStrategy('3 communities', 3),
-    # CommunitiesStrategy('3 communities', 3),
-    # ClusteringStrategy('2 clusters', 2),
+    # CommunitiesStrategy('2 communities', 2),
+    # CommunitiesStrategy('4 communities', 4),
+    ClusteringStrategy('2 clusters', 2),
     # ClusteringStrategy('3 clusters', 3),
 ]
 
@@ -32,21 +34,38 @@ def load_graph(adj_list):
     return G
 
 
+output = 'output.txt'
+
+
 def main():
     for strategy in strategies:
+        won_rounds = 0
         print('Strategy `{0}`'.format(strategy.name))
         for graph_name in graphs:
             adj_list = json.load(open('data/{0}.json'.format(graph_name)))
             seed_file = 'data/{0}-seeds.json'.format(graph_name)
+            G = load_graph(adj_list)
             if path.isfile(seed_file):
                 team_seeds = json.load(open(seed_file))
             else:
-                raise Exception('Nope')
+                naive_seeds = nc.NaiveHighestDegree().run(G, 120, )
+                team_seeds = {
+                    'Naive1': [naive_seeds[10:20]],
+                    'Naive2': [naive_seeds[30:40]],
+                    'Naive3': [naive_seeds[50:60]],
+                    'Naive4': [naive_seeds[60:70]],
+                    'Naive5': [naive_seeds[80:90]],
+                }
 
-            G = load_graph(adj_list)
             our_seeds = strategy.run(adj_list, G)
+            assert len(our_seeds) == 20
 
-            for round_no in range(50):
+            node_output = '\n'.join(str(x) for x in our_seeds) + '\n'
+            output_file = open(output, 'w')
+            for i in range(50):
+                output_file.write(node_output)
+
+            for round_no in range(len(list(team_seeds.values())[0])):
                 sim_data = {
                     'RabidPandas': our_seeds,
                 }
@@ -64,8 +83,11 @@ def main():
                             lost_to += ' ' + str(score)
                 if not lost:
                     print('Won round {}, {} nodes.'.format(round_no, our_score))
+                    won_rounds += 1
                 else:
                     print('--- round {}, {} nodes. Lost to : {}'.format(round_no, our_score, lost_to))
+
+        print('Strategy `{0}` won {1}/50 rounds'.format(strategy.name, won_rounds))
 
 
 if __name__ == '__main__':
